@@ -20,7 +20,7 @@ We are not given the source code of the challenge. The website is pretty simple:
 
 ![](/assets/images/2024-08-04-TFC-CTF-Surfing-and-Safe-Content/website.png)
 
-We just have a functionality to visit URLs of our choice. It states that only Google URLs and PNG files are allowed to be visited. Let's see what happends if we do not meet these conditions:
+We just have a functionality to visit URLs of our choice. It states that only Google URLs and PNG files are allowed to be visited. Let's see what happens if we do not meet these conditions:
 
 ![](/assets/images/2024-08-04-TFC-CTF-Surfing-and-Safe-Content/error.png)
 
