@@ -1,5 +1,5 @@
 ---
-title: "1337UP LIVE CTF: SafeNotes 2.0"
+title: "1337UP LIVE CTF 2024: SafeNotes 2.0"
 date: 2024-11-17
 categories: [CTF, Web]
 tags: [cspt,xss,dom-clobbering]     ## TAG names should always be lowercase
