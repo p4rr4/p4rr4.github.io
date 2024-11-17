@@ -261,13 +261,7 @@ def contact():
     return render_template('contact.html', msg='Feel free to reach out to us using the form below. We would love to hear from you!')
 ```
 
-This is due to the fact that the template `contact.html` uses a form object but it is not provided:
-
-```python
-{{ form.hidden_tag() }}
-```
-
-Just out of curiosity, to fix this, a `ContactForm` object should be created and passed to both `render_template` calls like this:
+This is due to the fact that the template `contact.html` uses a form object but it is not provided. Just out of curiosity, to fix this, a `ContactForm` object should be created and passed to both `render_template` calls like this:
 
 ```python
 form = ContactForm()
