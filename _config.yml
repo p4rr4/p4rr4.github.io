@@ -16,10 +16,10 @@ timezone: Europe/Madrid
 
 title: p4rr4 # the main title
 
-tagline: Computer Science student # it will display as the sub-title
+tagline: Computer Science student & CTF Player # it will display as the sub-title
 
 description: >- # used by seo meta and the atom feed
-  p4rr4's blog for CTF writeups and cybersecurity.
+  p4rr4's blog for CTF writeups and Cybersecurity.
 
 # Fill in the protocol & hostname for your site.
 # e.g. 'https://username.github.io', note that it does not end with a '/'.
