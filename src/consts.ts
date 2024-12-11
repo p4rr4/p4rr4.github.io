@@ -16,6 +16,7 @@ export const SITE: Site = {
   TITLE: 'p4rr4',
   DESCRIPTION:
     'Cybersecurity Blog',
+  EMAIL: 'antispam@antispam.com',
   NUM_POSTS_ON_HOMEPAGE: 2,
   POSTS_PER_PAGE: 3,
   SITEURL: 'https://p4rr4.github.io',
