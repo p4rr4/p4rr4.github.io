@@ -1,7 +1,7 @@
 ---
 name: 'p4rr4'
 pronouns: 'he/him'
-avatar: 'http://localhost:1234/static/avatar.jpg'
+avatar: 'https://p4rr4.github.io/static/avatar.jpg'
 bio: 'rambling around web stuff'
 linkedin: 'https://linkedin.com/in/p4rr4'
 website: 'https://p4rr4.github.io'
