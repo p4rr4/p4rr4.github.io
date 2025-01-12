@@ -1,0 +1,33 @@
+---
+import Link from '@/components/Link.astro'
+import { Badge } from '@/components/ui/badge'
+import type { CollectionEntry } from 'astro:content'
+
+type Props = {
+  bookmark: CollectionEntry<'bookmarks'>
+}
+
+const { bookmark } = Astro.props
+---
+
+<div
+  class="overflow-hidden rounded-xl border transition-colors duration-300 ease-in-out hover:bg-secondary/50"
+>
+  <Link href={bookmark.data.link} class="block" external>
+    <div class="p-4">
+      <h3 class="mb-2 text-lg font-semibold">{bookmark.data.name}</h3>
+      <p class="mb-4 text-sm text-muted-foreground">
+        {bookmark.data.description}
+      </p>
+      <div class="flex flex-wrap gap-2">
+        {
+          bookmark.data.tags.map((tag: any) => (
+            <Badge variant="secondary" showHash={false}>
+              {tag}
+            </Badge>
+          ))
+        }
+      </div>
+    </div>
+  </Link>
+</div>

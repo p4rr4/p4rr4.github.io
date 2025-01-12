@@ -1,0 +1,28 @@
+---
+import Breadcrumbs from '@/components/Breadcrumbs.astro'
+import Container from '@/components/Container.astro'
+import { SITE } from '@/consts'
+import Layout from '@/layouts/Layout.astro'
+
+---
+
+<Layout title="About" description={SITE.DESCRIPTION}>
+  <Container class="flex flex-col gap-y-6">
+    <Breadcrumbs items={[{ label: 'About', icon: 'lucide:info' }]} />
+
+    <section>
+      <div class="min-w-full" id="about">
+        <h1 class="mb-4 text-3xl font-bold">About</h1>
+        <p class="prose prose-neutral mb-8 dark:prose-invert">
+          Hi! My name is <b>p4rr4</b>, a 20 y/o <b>Computer Science student💻</b> and <b>CTF Player🚩</b>.
+          I'm interested in web and application security, as well as software development, and I'm currently studying Computer Science at the University of Alicante.
+        </p>
+        <p class="prose prose-neutral mb-8 dark:prose-invert">
+          In my free time, (apart from spending time with my computer) I like to play basketball, listen to music and play board games. As you may have guessed, I also like <b>Gravity Falls</b>. You can reach out to me through any of my social media. Hope you enjoy the content! :)
+        </p>
+        <h2 class="mb-4 text-2xl font-bold">Contact</h2>
+        Mail: <a href="javascript:window.open('mailto:'+'p4rr4'+'@d'+'uck'+'.com')">p4rr4 𝒂𝒕 duck dσ𝗍 cσ₥</a>
+      </div>
+    </section>
+  </Container>
+</Layout>
