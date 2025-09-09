@@ -1,28 +1,15 @@
+import { glob } from 'astro/loaders'
 import { defineCollection, z } from 'astro:content'
 
 const blog = defineCollection({
-  type: 'content',
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
   schema: ({ image }) =>
     z.object({
-      title: z
-        .string()
-        .max(
-          60,
-          'Title should be 60 characters or less for optimal Open Graph display.',
-        ),
-      description: z
-        .string()
-        .max(
-          155,
-          'Description should be 155 characters or less for optimal Open Graph display.',
-        ),
+      title: z.string(),
+      description: z.string(),
       date: z.coerce.date(),
-      image: image()
-        .refine((img) => img.width === 1200 && img.height === 630, {
-          message:
-            'The image must be exactly 1200px × 630px for Open Graph requirements.',
-        })
-        .optional(),
+      order: z.number().optional(),
+      image: image().optional(),
       tags: z.array(z.string()).optional(),
       authors: z.array(z.string()).optional(),
       draft: z.boolean().optional(),
@@ -30,11 +17,11 @@ const blog = defineCollection({
 })
 
 const authors = defineCollection({
-  type: 'content',
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/authors' }),
   schema: z.object({
     name: z.string(),
     pronouns: z.string().optional(),
-    avatar: z.string().url(),
+    avatar: z.string().url().or(z.string().startsWith('/')),
     bio: z.string().optional(),
     mail: z.string().email().optional(),
     website: z.string().url().optional(),
@@ -46,18 +33,27 @@ const authors = defineCollection({
 })
 
 const projects = defineCollection({
-  type: 'content',
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/projects' }),
   schema: ({ image }) =>
     z.object({
       name: z.string(),
       description: z.string(),
       tags: z.array(z.string()),
-      image: image().refine((img) => img.width === 1200 && img.height === 630, {
-        message:
-          'The image must be exactly 1200px × 630px for Open Graph requirements.',
-      }),
+      image: image(),
       link: z.string().url(),
+      startDate: z.coerce.date().optional(),
+      endDate: z.coerce.date().optional(),
     }),
 })
 
-export const collections = { blog, authors, projects }
+const bookmarks = defineCollection({
+  type: 'content',
+  schema: z.object({
+    name: z.string(),
+    description: z.string(),
+    link: z.string().url(),
+    tags: z.array(z.string()),
+  }),
+})
+
+export const collections = { blog, authors, projects, bookmarks }

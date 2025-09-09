@@ -35,7 +35,7 @@ The challenge consists of a web application that stores notes. After creating an
 
 For this challenge, we are given its source code. The challenge's web application is written in Python using Flask and relies on a backend database and on a bot. The bot will load the flag into a cookie and visit the note we report. The database uses PostgreSQL and will store the following data:
 
-```python
+```py
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)

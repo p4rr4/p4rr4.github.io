@@ -1,52 +1,53 @@
 ---
+import BlogCard from '@/components/BlogCard.astro'
 import Breadcrumbs from '@/components/Breadcrumbs.astro'
-import Container from '@/components/Container.astro'
 import Bookmark from '@/components/Bookmark.astro'
+import Container from '@/components/Container.astro'
+import PageHead from '@/components/PageHead.astro'
 import PaginationComponent from '@/components/ui/pagination'
-import type { PaginateFunction } from 'astro'
 import { SITE } from '@/consts'
 import Layout from '@/layouts/Layout.astro'
-import { getCollection } from 'astro:content'
+import { getAllBookmarks } from '@/lib/data-utils'
+import type { PaginateFunction } from 'astro'
 
 export async function getStaticPaths({
   paginate,
 }: {
   paginate: PaginateFunction
 }) {
-  const allBookmarks = await getCollection('bookmarks', ({ data }) => !data.draft)
+  const allBookmarks = await getAllBookmarks()
   return paginate(
     allBookmarks.sort((a, b) => a.data.name.localeCompare(b.data.name)),
-    { pageSize: SITE.POSTS_PER_PAGE },
+    { pageSize: SITE.postsPerPage },
   )
 }
 
 const { page } = Astro.props
 ---
 
-<Layout title="Bookmarks" description="Personal collection of bookmarks.">
-  <Container class="flex flex-col gap-y-6">
-    <Breadcrumbs 
-      items={[
-        { label: 'Bookmarks', icon: 'lucide:bookmark' },
-        { label: `Page ${page.currentPage}`, icon: 'lucide:folder-open' },
-      ]} 
-    />
+<Layout class="max-w-3xl">
+  <PageHead slot="head" title="Bookmarks" />
+  <Breadcrumbs
+    items={[
+      { label: 'Bookmarks', href: '/bookmarks', icon: 'lucide:bookmark' },
+      { label: `Page ${page.currentPage}`, icon: 'lucide:folder-open' },
+    ]}
+  />
 
     <div class="flex min-h-[calc(100vh-18rem)] flex-col gap-y-8">
-      <section class="flex flex-col gap-y-4">
-        <ul class="not-prose flex flex-col gap-4">
-          {page.data.map((bookmark) => (
-            <li><Bookmark bookmark={bookmark} /></li>
-          ))}
-        </ul>
-      </section>
+        <section class="flex flex-col gap-y-4">
+            <ul class="not-prose flex flex-col gap-4">
+            {page.data.map((bookmark) => (
+                <li><Bookmark bookmark={bookmark} /></li>
+            ))}
+            </ul>
+        </section>
     </div>
 
     <PaginationComponent
-      currentPage={page.currentPage}
-      totalPages={page.lastPage}
-      baseUrl="/bookmarks/"
-      client:load
+        currentPage={page.currentPage}
+        totalPages={page.lastPage}
+        baseUrl="/bookmarks/"
+        client:load
     />
-  </Container>
 </Layout>
