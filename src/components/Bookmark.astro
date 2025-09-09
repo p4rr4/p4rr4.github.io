@@ -22,7 +22,7 @@ const { bookmark } = Astro.props
       <div class="flex flex-wrap gap-2">
         {
           bookmark.data.tags.map((tag: any) => (
-            <Badge variant="secondary" showHash={false}>
+            <Badge variant="secondary">
               {tag}
             </Badge>
           ))
